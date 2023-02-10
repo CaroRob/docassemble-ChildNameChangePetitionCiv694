@@ -1,7 +1,10 @@
 ---
 include:
   - docassemble.AssemblyLine:assembly_line.yml
-  - docassemble.ALAnyState:any_state.yml
+  - docassemble.AKA2JBranding:custom_organization.yml
+---
+objects:
+  - other_parties: ALPeopleList.using(there_are_any=False)
 ---
 metadata:
   title: |
@@ -47,7 +50,11 @@ code: |
   AL_DEFAULT_STATE = "AK"
 ---
 code: |
+  feedback_form = "docassemble.AKA2JBranding:feedback.yml" 
+---
+code: |
   github_repo_name =  'docassemble-ChildNameChangePetitionCiv694'
+  github_repo =  'docassemble-ChildNameChangePetitionCiv694'
 ---
 code: |
   interview_short_title = "Ask the court to change your child\'s legal name."
@@ -72,9 +79,9 @@ code: |
   # Set the allowed courts for this interview
   allowed_courts = interview_metadata["Child_Name_Change_Petition_civ694"]["allowed courts"]
   nav.set_section('review_Child_Name_Change_Petition_civ694')
-  user_role = 'plaintiff'
+  #  user_role = 'plaintiff'
   petitioners.gather()
-  agree_email_yes
+  #  agree_email_yes
   Who_is_asking_for_the_name_change
   users1_legal[0]
   users[0].birthdate
@@ -181,34 +188,80 @@ question: |
   Person filing petition
 yesno: agree_email_yes
 ---
-id: Who is asking for the name change
-question: |
+id: your name
+sets:
+    - users[0].name.first
+    - users[0].name.last
+    - users[0].name.middle
+    - users[0].name.suffix
+question:  |
   Who is asking for the name change?
 subquestion: |
-  How are you related to this child?
+  What is your name?
 fields:
-  - "parent": parent_yes
-    datatype: yesno
-  - "legal guardian": guardian_yes
-    datatype: yesno
+  - code: |
+      users[0].name_fields()
+  - How are you related to this child?: user_relationship_to_child
+    input type: radio
+    choices:
+      - mother
+      - father
+      - guardian
+      - other  
+---
+#  id: Who is asking for the name change
+#  question: |
+#    Who is asking for the name change?
+#  subquestion: |
+#    How are you related to this child?
+#  fields:
+#    - "parent": parent_yes
+#      datatype: yesno
+#    - "legal guardian": guardian_yes
+#      datatype: yesno
+#  ---
+id: consent of non-petitioning parent
+question: |
+  % if user_relationship_to_child in ('mother', 'father'):
+  Does your child's other parent agree to the name change?
+  % elif user_relationship_to_child == 'guardian':
+  Do the child's parents agree to this name change?
+  % endif
+subquestion: |
+  subquestion
+fields:
   - "Consent is attached": consent_attached
     datatype: yesno
   - "name of non-petitioning parents": non_petitioning_parents
     maxlength: 38
+    show if:
+      consent_attached
   - "Consent is not necessary": consent_attached_not_necessary
     datatype: yesno
   - "the parents is or are dead. I have attached child's birth certificate and the parent's death certificate": parent_deceased_yes
     datatype: yesno
+    show if:
+      consent_attached_not_necessary
   - "Parent rights terminated": parent_rights_terminated_yes
     datatype: yesno
+    show if:
+      consent_attached_not_necessary
   - "Date parents' rights were terminated": parent_rights_terminated_date
     datatype: date
+    show if:
+      parent_rights_terminated_yes
   - "State that terminated parents' rights": parent_rights_terminated_court
     maxlength: 18
+    show if:
+      parent_rights_terminated_yes
   - "Other": other_reason_not_attached_yes
     datatype: yesno
+    show if:
+      consent_attached_not_necessary
   - "Other reason parents' consent is not attached": other_reason_not_attached
     maxlength: 51
+    show if:
+      other_reason_not_attached_yes
 continue button field: Who_is_asking_for_the_name_change
 ---
 id: Child name change info on earlier screen
